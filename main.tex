@@ -197,10 +197,99 @@ Lout (i) menunjukkan halaman yang ditunjuk oleh halaman i.
 Nilai Peringkat rj dari halaman j diperbarui, hingga semua
 peringkat nilai konvergen, sebagai berikut:
 
+\begin{equation}
+    rj = sum. i \epsilon Lin(j) BWIJRI
+\end{equation}
+
+di mana β menunjukkan tingkat teleportasi seperti di PageRank, Lln(j) adalah halaman yang mengarah ke halaman j, dan
+N adalah totalnya jumlah halaman.
+Untuk mengukur kesamaan antar halaman, kami menggunakan cosinus jarak antara vektor kata kunci yang elemennya
+adalah Nilai TFIDF dari lemma. Lemma diekstraksi dari
+Halaman Korea menggunakan penganalisa morfologi Korea.
+TF (Frekuensi Istilah) adalah frekuensi lemma dalam satu halaman, dan IDF (Frekuensi dokumen terbalik) adalah frekuensi
+halaman mengandung lemma. [13] Untuk kata kunci di halaman, TFIDF-nya dihitung sebagai berikut:
+
+\begin{equation}
+    TFIDF = \frac{TF}{log \binom{DF}{N} } 
+\end{equation}
+Selanjutnya, kesamaan Sij antara halaman i dan j dihitung
+dengan jarak cosinus antara vektor kata kunci TFIDF nilai:
+
+\begin{equation}
+    sij = \frac{Ki.Kj}{|Ki||kj|} 
+\end{equation}
+
+di mana Kiadalah vektor kata kunci halaman i.
+Menggunakan kesamaan dari Persamaan (7), bobot dihitung
+sebagai: Persamaan (4). Namun, itu tidak mempertimbangkan
+situasi bahwa kesamaan antar halaman adalah nol. Oleh karena
+itu, kami mengusulkan suatu algoritma, yang menanganinya
+dengan mengalokasikan kesamaan minimum ke tautan ke
+halaman dengan kesamaan nol.
+di mana ρ adalah parameter yang disediakan pengguna untuk
+kesamaan nol, dan ZR adalah jumlah tautan kesamaan bukan
+nol.
+Persamaan (8) dikembangkan untuk membuat kesamaan
+yang disesuaikan dengan bobot kesamaan nol lebih kecil
+dari kesamaan bukan nol nilai-nilai. ditentukan menurut Persamaan(8), dimana kesamaan minimum dikendalikan oleh α.
+Bersama dengan yang disesuaikan kesamaan baru, bobotnya
+hanya perlu dihitung ulang sebagai biasa. Pada akhirnya,
+nilai peringkat ditentukan seperti pada algoritma PageRank
+berbobot dengan Persamaan (4).
+
+
 
 %Experiment
 \section{Experiments}
-isi dari Experiments
+di mana ρ adalah parameter yang disediakan pengguna untuk
+kesamaan nol, dan ZR adalah jumlah tautan kesamaan bukan
+nol.
+Persamaan (8) dikembangkan untuk membuat kesamaan
+yang disesuaikan dengan bobot kesamaan nol lebih kecil
+dari kesamaan bukan nol nilai-nilai. ditentukan menurut Persamaan(8), dimana kesamaan minimum dikendalikan oleh α.
+Bersama dengan yang disesuaikan kesamaan baru, bobotnya
+hanya perlu dihitung ulang sebagai biasa. Pada akhirnya,
+nilai peringkat ditentukan seperti pada algoritma PageRank
+berbobot dengan Persamaan (4).
+
+tugas yang diusulkan metode telah diimplementasikan dalam
+program MapReduce. Kami melakukan percobaan 10 kali
+untuk dipilih secara acak 10 kata kunci dari Wikipedia
+dan menemukan halaman yang mengandung kata kueri
+dan mengurutkannya menurut urutan menurun dari nilai
+peringkat mereka. Kemudian kami memilih 20 halaman
+teratas dan dievaluasi relevansinya dengan 5 skala level.
+Kami menghitung Keuntungan Kumulatif Diskon yang
+Dinormalisasi (NDCG) [13] untuk 20 halaman teratas
+untuk setiap kueri. NDCG adalah metrik evaluasi yang
+digunakan untuk mengevaluasi kinerja mesin pencari web. Ini
+memberikan nilai dari 0,0 hingga 1,0, dan nilai 1,0 adalah
+yang ideal peringkat entitas. Halaman kebenaran dasar untuk
+pertanyaan adalah ditentukan dengan memilih halaman tautan
+keluar dari halaman kueri di penurunan urutan kesamaan.
+Gambar 2 menunjukkan hasil percobaan untuk aslinya
+PageRank, Qias dkk.[3] metode dan metode yang diusulkan
+dalam hal NDCG. Diamati bahwa metode yang diusulkan
+telah memberikan peningkatan sekitar 2% rata-rata selama
+PageRank asli. Selama Qias et al. [3], yang diusulkan metode
+meningkat di NDCG sekitar 1,3%.
+Dari percobaan, kami mengamati bahwa yang diusulkan
+metode menghasilkan hasil yang sedikit lebih baik secara ratarata dibandingkan dengan metode lainnya.
+
+Dalam penelitian ini, kami menganalisis perilaku tertimbang
+algoritma PageRank dan mengidentifikasi bahwa kesamaan
+algoritma PageRank berbobot berbasis tidak dapat bekerja dengan baik di beberapa situasi, terutama, ketika kata kunci kata
+benda adalah diekstraksi dari halaman Korea untuk perhitungan kesamaan. baru varian dari algoritma PageRank berbobot
+diusulkan untuk menangani nol kesamaan antar halaman.
+Untuk volume data yang besar pemrosesan, algoritma yang
+diusulkan diimplementasikan dalam Program MapReduce dan
+set data eksperimental adalah diproses pada cluster Hadoop
+dari 5 node. yang diusulkan algoritma telah diterapkan ke
+Wikipedia Korea untuk evaluasi kinerja. Dalam percobaan,
+kami menerapkan tiga algoritma: PageRank asli, Qias et al.’s
+PageRank berbobot [3], dan metode yang diusulkan. Dari percobaan kami telah mengamati metode yang diusulkan tercapai
+beberapa peningkatan dalam hal NDCG dibandingkan yang
+dibandingkan metode.
 
 %conclusions
 \section{conclusions}
