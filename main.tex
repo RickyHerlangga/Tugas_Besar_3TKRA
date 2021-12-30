@@ -1,0 +1,212 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{cite}
+\usepackage{graphicx}
+
+\title{An Improvement of Weighted PageRank to Handle the Zero Link Similarity }
+\author{\IEEEauthorblockN{Ricky Herlangga\\ 2022018}\\
+\IEEEauthorblockA{\textit{Fakultas Teknologi Informasi}\\
+\textit{Institut Teknologi Batam}\\
+Batam, Indonesia\\
+2022018@student.iteba.ac.id}}
+
+\usepackage
+
+%START DOCUMENT
+\begin{document}
+
+% Judul
+\maketitle
+
+%ABSTRAK
+\begin{abstract}
+Algoritma PageRank yang terkenal memanfaatkan struktur tautan untuk menghitung peringkat kualitas halaman.
+Ini pada dasarnya memberikan jumlah probabilitas yang sama ke halaman tetangga pada sebuah halaman.
+Sebagai ekstensinya, algoritma PageRank berbobot telah diusulkan yang memberikan bobot berbeda pada tautan keluar dari sebuah halaman.
+Beberapa algoritma PageRank berbobot menggunakan kesamaan antar halaman sebagai bobot.
+Di halaman web Korea, kami menemukan bahwa terkadang memiliki nilai nol untuk kesamaan antar halaman dari halaman tetangga karena karakteristik bahasa.
+Makalah ini mengusulkan algoritma PageRank berbobot yang ditingkatkan yang dapat menangani kesamaan antar-halaman nol seperti itu.
+Metode yang diusulkan telah diimplementasikan menggunakan paradigma MapReduce untuk penanganan data besar, dan telah dievaluasi melalui halaman web Wikipedia bahasa Korea dan dibandingkan dengan dua metode lainnya.
+\end{abstract}
+
+%kata kunci
+\begin{IEEEkeywords}
+    Weighted     PageRank;     Similarity;     MapReduce; TFIDF 
+\end{IEEEkeywords}
+
+%Pendahuluan
+\section{introduction}
+Saat ini, ketika orang ingin mengetahui sesuatu, banyak dari mereka mencoba mencarinya di Internet.
+Mereka akan kewalahan jika terlalu banyak halaman yang diberikan sebagai halaman yang relevan dalam pencarian web.
+Dalam pencarian informasi (IR), peringkat telah menjadi salah satu isu penting.
+To  sort  out  influential  ones  among  searched  pages,  various ranking algorithms have been proposed. ~\cite{brin1998anatomy,xing2004weighted,qiao2010simrank}\\
+
+PageRank\cite{brin1998anatomy} adalah salah satu algoritma peringkat terkenal yang menggunakan struktur tautan Web.
+ini mengasumsikan bahwa seorang peselancar berjalan secara acak di atas halaman web dan mencoba menentukan distribusi statis peselancar.
+Dengan metafora penderitaan acak, semakin banyak tautan yang dimiliki halaman, semakin tinggi peringkatnya.
+Di PageRank, penderitaan membuat jalan acak ke halaman tetangga dengan probabilitas yang sama.
+Kadang-kadang probabilitas yang sama ini tampaknya tidak masuk akal karena beberapa tautan terhubung ke halaman tetangga yang jauh lebih penting.\\
+
+Untuk mengatasi situasi ini, algoritma PageRank berbobot~\cite{qiao2010simrank,xing2004weighted} telah di usulkan.
+Mereka memperhitungkan baik distribusi jumlah in-link untuk node tetangga, jumlah kunjungan ke halaman tetangga, atau kesamaan antar halaman.
+Masing-masing memiliki pro dan kontra. Pembobotan berbasis kesamaan antar halaman terdengar bagus untuk peringkat berbasis konten.\\
+
+Kami telah mencoba algoritma PageRank berbobot berbasis kesamaan antar halaman ke halaman Wikipedia bahasa Korea. Untuk menghitung kesamaan antar halaman, kami menggunakan model vektor~\cite{}
+Untuk mendapatkan representasi vektor untuk halaman, pertama-tama kami melakukan analisis morfologi untuk mengekstrak kata-kata.
+Berbeda dengan bahasa barat, kata benda dalam bahasa Korea menyampaikan informasi yang paling berarti.
+Karena karakteristik bahasa, kata benda diekstraksi untuk mengidentifikasi kata kunci.
+Kata kunci diidentifikasi menggunakan istilah frekuensi dan informasi frekuensi dokumen terbalik. Dengan kata kunci, representasi vektor untuk halaman diperoleh.
+Dengan kata kunci, representasi vektor untuk halaman diperoleh. Kemudian, kebetulan memiliki kesamaan nol ketika kesamaan antar halaman dihitung menggunakan produk dalam dari vektor-vektor tersebut.
+Sangat canggung untuk halaman tetangga yang tidak memiliki kesamaan.
+makalahnya berkaitan dengan peningkatan pada PageRank berbobot berbasis kesamaan antar halaman untuk menangani kasus-kasus dengan tautan nol kesamaan.\\
+
+Sisa makalah ini disusun sebagai berikut: Bagian II menyajikan PageRank dan variannya secara lebih rinci.
+Bagian III memperkenalkan peningkatan pada PageRank berbobot, dan Bagian IV menunjukkan beberapa hasil eksperimen untuk metode yang diusulkan.
+Kami menarik kesimpulan di Bagian V.
+
+\section{Related Works}
+\subsection{PageRank Algoritm}
+PageRank\cite{brin1998anatomy} adalah algoritma perbatasan yang memberi peringkat halaman dengan mengacu pada struktur tautan Web.
+PageRank memperlakukan halaman sebagai node dan hyperlink sebagai tepi grafik.
+Setiap node memiliki nilai Rank sendiri dan mendistribusikannya secara merata ke tetangganya.
+Distribusi berulang tanpa batas sampai semua nilai peringkat konvergen.
+Distribusi stasioner dari Peringkat dianggap sebagai skor Peringkat akhir halaman.
+Untuk mencegah peningkatan nilai Peringkat tanpa batas, jumlah semua Peringkat dibatasi menjadi 1, dan juga untuk setiap nilai Peringkat tidak lebih besar dari 1.
+Nilai peringkat rj dari node j dihitung sebagai berikut:
+
+\begin{equation}
+    r_j = \sum_{i \rightarrow j} \frac{r_j}{L_{out}(i)}
+\end{equation}
+
+\begin{equation}
+    \sum r_j = 1
+\end{equation}
+
+dimana Lout adalah jumlah out-link dari node i.Setiap
+simpul i mendistribusikan skor peringkatnya ri secara merata
+simpul tetangganya j. SEBUAH node j mengumpulkan semua
+skor Rank yang dikirimkan dari tetangga node dan ambil jumlah mereka sebagai skor Peringkat baru rj . Peringkat ini proses
+distribusi dapat dinyatakan dengan kedekatan stokastik matriks
+M dan vektor pangkat r. Matriks M adalah tetangganya
+matriks untuk web yang mengkodekan hubungan lingkungan
+antara halaman dan distribusi stasioner nilai Peringkat. Baru
+Nilai peringkat r
+(t+1) dihitung sebagai berikut:
+
+\begin{equation}
+    r(i+l)=Mr(t)
+\end{equation}
+\subsection{WeightedPageRank Algoritm}
+Surfers sebenarnya tidak melakukan random walk seperti
+di PageRank. Untuk mengakomodasi karakteristik perilaku
+seperti itu, pembobotan Algoritma PageRank telah diusulkan
+yang memungkinkan penderitaan untuk membuat transisi
+probabilistik yang tidak merata ke tetangga halaman. [2], [3],
+[8]
+
+
+\subsubsection{ Weighted  PageRank  based  on  the  number  of  in-links  of  neighboring pages}
+Xing dan Ghorbani [2] mengusulkan PageRank algoritma
+yang memberikan lebih banyak porsi Rank ke tetangga
+halaman dengan lebih banyak tautan. Ya tidak cukup
+mencerminkan perilaku peselancar yang sebenarnya, karena
+hanya informasi struktur topologi digunakan.
+
+\subsubsection{Weighted PageRank based on Similarity Measure}
+Qiaoet al. [3] menyarankan varian PageRank berbobot
+algoritma, yang disebut SimRank, yang mendistribusikan nilai
+Rank di porsi kesamaan antar halaman. Untuk menerapkan
+metode, semua kesamaan halaman berpasangan perlu dihitung
+lebih awal. Secara komputasi mahal untuk menerapkan
+metode ini untuk skala besar volume halaman. Oleh karena
+itu untuk menerapkan metode, perlu infrastruktur komputasi
+paralel terdistribusi seperti Hadoop Pengurangan Peta [14].
+
+\subsubsection{Weighted PageRank based on visits of links}
+Qiaoet al. [3] menyarankan varian PageRank berbobot
+algoritma, yang disebut SimRank, yang mendistribusikan nilai
+Rank di porsi kesamaan antar halaman. Untuk menerapkan
+metode, semua kesamaan halaman berpasangan perlu dihitung
+lebih awal. Secara komputasi mahal untuk menerapkan
+metode ini untuk skala besar volume halaman. Oleh karena
+itu untuk menerapkan metode, perlu infrastruktur komputasi
+paralel terdistribusi seperti Hadoop Pengurangan Peta [14].
+
+\subsection{Hub and Authorities Algorithm }
+Qiaoet al. [3] menyarankan varian PageRank berbobot
+algoritma, yang disebut SimRank, yang mendistribusikan nilai
+Rank di porsi kesamaan antar halaman. Untuk menerapkan
+metode, semua kesamaan halaman berpasangan perlu dihitung
+lebih awal. Secara komputasi mahal untuk menerapkan
+metode ini untuk skala besar volume halaman. Oleh karena
+itu untuk menerapkan metode, perlu infrastruktur komputasi
+paralel terdistribusi seperti Hadoop Pengurangan Peta [14].
+
+\subsection{Distributed and Parallel Computing }
+Pengambilan informasi dari repositori data besar, seperti
+Web dan penyimpanan data besar membutuhkan infrastruktur
+komputasi yang menyimpan dan memproses data tersebut.
+Kita dapat menggunakan salah satu dari sistem superkomputer
+atau komputasi terdistribusi dan paralel sistem\\
+
+Hadoop [14] adalah infrastruktur komputasi yang baik
+yang dapat ditetapkan dalam biaya ekonomi. Ini adalah
+proyek Apache untuk platform komputasi terdistribusi yang
+menyediakan seperti sistem file terdistribusi yang disebut
+HDFS (Hadoop Distributed File System) dan kerangka kerja
+komputasi paralel terdistribusi yang disebut Kurangi Peta.
+Kerangka kerja MapReduce mengatur pekerjaan ke dalam Peta
+tugas dan Mengurangi tugas. Data input dipartisi dan diproses
+oleh proses Peta, dan hasil pemrosesannya dibentuk menjadi pasangan nilai kunci. Hasil tugas peta dikocok menjadi
+Reduce tugas sesuai dengan kunci mereka. Kurangi proses
+agregat nilai dengan kunci yang sama, untuk mendapatkan
+hasil akhir. Ini kerangka kerja komputasi memungkinkan kita
+untuk menangani beban berat komputasi seperti komputasi
+kesamaan halaman berpasangan.
+
+
+%proposed algorithm
+\section{THE PROPOSED ALGORITHM}
+PageRank berbobot berbasis kesamaan antar halaman
+pada kesamaan tidak dapat menangani situasi yang antar
+halaman kesamaannya adalah 0. Untuk menghadapi situasi
+ini, kami mengusulkan a metode untuk menjaga kesamaan
+antar halaman nol dan untuk menyesuaikan bobot untuk
+distribusi nilai Rank.
+Ekstraksi kata kunci berbasis kata benda seperti di halaman
+Korea terkadang menemukan kata kunci umum di antara
+halaman yang ditautkan. Terlepas dari gagasan yang melekat
+tentang kesamaan antar halaman untuk memperkirakan
+frekuensi traversal tautan, situasi nol-kesamaan menghalangi
+penerapan algoritma PageRank berbobot.
+Untuk meningkatkan penerapan PageRank berbobot,
+kami mengusulkan metode untuk menjamin beberapa bobot
+minimum dan menyesuaikan bobot. PageRank berbobot yang
+diusulkan berfungsi sebagai berikut, yang pada dasarnya
+berperilaku dengan cara yang sama seperti Qiao algoritme et
+al. [3]
+Berdasarkan ukuran kemiripan, bobot wij pada node i ke j
+dihitung sebagai berikut:
+
+\begin{equation}
+    wij = \frac{sij}{\sum. ke Lout(i) sk  } 
+\end{equation}
+
+di mana sij adalah kesamaan antara halaman i dan j dan
+Lout (i) menunjukkan halaman yang ditunjuk oleh halaman i.
+Nilai Peringkat rj dari halaman j diperbarui, hingga semua
+peringkat nilai konvergen, sebagai berikut:
+
+
+%Experiment
+\section{Experiments}
+isi dari Experiments
+
+%conclusions
+\section{conclusions}
+isi dari conclusions
+
+%references
+\bibliographystyle{IEEEtran}
+\bibliography{References}
+\end{document}
